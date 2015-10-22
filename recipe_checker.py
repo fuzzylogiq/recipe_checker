@@ -85,17 +85,20 @@ class RecipeChecker():
 
     def reporter(self, report_type, report_string, inserts):
         if report_type == "fail":
+            label = "[fail] "
             color = bcolors.FAIL
             verbosity_level = 0
         if report_type == "warn":
+            label = "[warn] "
             color = bcolors.WARNING
             verbosity_level = 1
         if report_type == "ok":
+            label = "[ ok ] "
             color = bcolors.OKBLUE
             verbosity_level = 2
         if self.verbosity >= verbosity_level:
             self.subreport.append (color
-                                 + "==> "
+                                 + label
                                  + report_string 
                                  % inserts
                                  + bcolors.ENDC)
