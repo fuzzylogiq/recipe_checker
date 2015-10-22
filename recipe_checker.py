@@ -94,12 +94,14 @@ class RecipeChecker():
             color = bcolors.OKBLUE
             verbosity_level = 2
         if self.verbosity >= verbosity_level:
-            self.subreport.append (color 
-                    + report_string 
-                    % inserts
-                    + bcolors.ENDC)
+            self.subreport.append (color
+                                 + "==> "
+                                 + report_string 
+                                 % inserts
+                                 + bcolors.ENDC)
 
     def load_recipe(self):
+        self.report +=  "Checking recipe %s...\n" % self.recipe_name
         if self.recipe_name.split('.')[-1] == "recipe":
             self.recipe_type = self.get_recipe_type(self.recipe_name)
             try:
@@ -107,49 +109,48 @@ class RecipeChecker():
             except Exception, e:
                 self.is_recipe = False
                 self.reporter("fail", 
-                        "Unable to load %s, are you sure it is a recipe file?",
-                        (self.recipe_name))
+                              "Unable to load %s, are you sure"
+                              "it is a recipe file?",
+                              (self.recipe_name))
         else:
             self.is_recipe = False
             self.reporter("fail",
-                    "Bailing: %s does not look like a .recipe file",
-                    (self.recipe_name))
+                          "Bailing: %s does not look like a .recipe file",
+                          (self.recipe_name))
 
     def check_pkginfo(self, setting, config):
         if config['SET']:
             if setting not in self.pkginfo:
                 self.reporter("fail",
-                        '==> %s missing from pkginfo!',
-                        (setting))
+                              '%s missing from pkginfo!',
+                              (setting))
             elif self.pkginfo[setting] == '':
                 self.reporter("fail",
-                        '==> %s present but not set to any value!',
-                        (setting))
+                              '%s present but not set to any value!',
+                              (setting))
             else:
                 if config['VALUE']:
                     if self.pkginfo[setting] == config['VALUE']:
                         self.reporter("ok",
-                                '==> %s correctly set to: \'%s\'',
-                                (setting, self.pkginfo[setting]))
+                                      '%s correctly set to: \'%s\'',
+                                      (setting, self.pkginfo[setting]))
                     else:
                         self.reporter("warn",
-                                '==> %s wrongly set to: \'%s\'',
-                                (setting, self.pkginfo[setting]))
+                                      '%s wrongly set to: \'%s\'',
+                                      (setting, self.pkginfo[setting]))
                 else:
                     self.reporter("ok",
-                            '==> %s set to: \'%s\'',
-                            (setting, self.pkginfo[setting]))
+                                  '%s set to: \'%s\'',
+                                  (setting, self.pkginfo[setting]))
             
 
 
     def check_recipe(self):
-        self.report +=  "Checking recipe %s...\n" % self.recipe_name
-        if self.recipe_type == 'munki':
-            if 'Input' in self.recipe_as_dict:
-                if 'pkginfo' in self.recipe_as_dict['Input']:
-                    self.pkginfo = self.recipe_as_dict['Input']['pkginfo']
-                    for setting, config  in PKGINFO_SETTINGS.iteritems():
-                        self.check_pkginfo(setting, config)
+        if (self.recipe_type == 'munki' and 'Input' in self.recipe_as_dict
+            and 'pkginfo' in self.recipe_as_dict['Input']):
+            self.pkginfo = self.recipe_as_dict['Input']['pkginfo']
+            for setting, config  in PKGINFO_SETTINGS.iteritems():
+                self.check_pkginfo(setting, config)
         else:
             self.reporter("fail",
             '%s is not a .munki recipe',
