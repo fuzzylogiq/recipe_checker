@@ -169,7 +169,7 @@ def main():
     recipes = args.recipe[0]
     verbosity = args.verbose
 
-    for recpie in recipes:
+    for recipe in recipes:
         r = RecipeChecker(recipe, verbosity)
         r.load_recipe()
         if r.is_recipe:
