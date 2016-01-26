@@ -145,22 +145,24 @@ def main():
     ''' Parses args and checks filename passed in '''
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="count", default=0)
-    parser.add_argument("recipe", type=str, help="a valid autopkg recipe file")
+    parser.add_argument("recipe", action='append', nargs='+', type=str,
+                         help="at least one autopkg recipe file")
     args = parser.parse_args()
 
-    recipe = args.recipe
+    recipes = args.recipe[0]
     verbosity = args.verbose
-    r = RecipeChecker(recipe, verbosity)
-    r.load_recipe()
-    if r.is_recipe:
-        r.get_recipe_type(recipe)
-        r.check_recipe()
-    print r.report
-    if r.subreport != []:
-        for line in r.subreport:
-            print line
-    else:
-        print "==> All checks passed at this verbosity level!"
+    for recipe in recipes:
+        r = RecipeChecker(recipe, verbosity)
+        r.load_recipe()
+        if r.is_recipe:        
+            r.get_recipe_type(recipe)
+            r.check_recipe()
+        print r.report
+        if r.subreport != []:
+            for line in r.subreport:
+                print line
+        else:
+            print "==> All checks passed at this verbosity level!"
 
 if __name__ == '__main__':
     main()
