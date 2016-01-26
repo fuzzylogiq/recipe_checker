@@ -28,36 +28,15 @@ import sys
 import argparse
 
 # FIXME NOT USED YET
-INPUT_SETTINGS = {
-            'MUNKI_REPO_SUBDIR':
-                { 'SET':True,
-                'VALUE': None }
-            }
+INPUT_SETTINGS = {'MUNKI_REPO_SUBDIR': {'SET':True, 'VALUE': None}}
 
-PKGINFO_SETTINGS = {
-            'catalogs': 
-                { 'SET': True,
-                'VALUE': ['testing'] },
-            'category': 
-                { 'SET': True,
-                'VALUE': None },
-            'description':
-                { 'SET': True,
-                'VALUE': None },
-            'developer':
-                { 'SET': True,
-                'VALUE': None },
-            'display_name': 
-                { 'SET': True,
-                'VALUE': None },
-            'name':
-                { 'SET': True,
-                'VALUE': None },
-            'unattended_install': 
-                { 'SET': True,
-                'VALUE': True }
-            }
-
+PKGINFO_SETTINGS = {'catalogs': {'SET': True, 'VALUE': ['testing']},
+                    'category': {'SET': True, 'VALUE': None},
+                    'description': {'SET': True, 'VALUE': None},
+                    'developer': {'SET': True, 'VALUE': None},
+                    'display_name': {'SET': True, 'VALUE': None},
+                    'name': {'SET': True, 'VALUE': None},
+                    'unattended_install': {'SET': True, 'VALUE': True}}
 
 class bcolors:
     HEADER = '\033[95m'
@@ -69,21 +48,25 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-class RecipeChecker():
+class RecipeChecker(object):
+    ''' Checks an autopkg recipe '''
     def __init__(self, recipe, verbosity):
-        self.report =  "------------------------------------------------\n"
+        ''' init our RecipeChecker object '''
+        self.report = "------------------------------------------------\n"
         self.subreport = []
         self.recipe_name = recipe
+        self.recipe_type = ""
         self.recipe_as_dict = {}
         self.pkginfo = {}
         self.verbosity = verbosity
         self.is_recipe = True
 
     def get_recipe_type(self, recipe):
-        recipe_type = recipe.split('.')[-2]
-        return recipe_type
+        ''' Figure out recipe type from recipe. Returns type '''
+        self.recipe_type = recipe.split('.')[-2]
 
     def reporter(self, report_type, report_string, inserts):
+        ''' Adds to self.subreport, colouring output '''
         if report_type == "fail":
             label = "[fail] "
             color = bcolors.FAIL
@@ -97,21 +80,20 @@ class RecipeChecker():
             color = bcolors.OKBLUE
             verbosity_level = 2
         if self.verbosity >= verbosity_level:
-            self.subreport.append (color
-                                 + label
-                                 + report_string 
-                                 % inserts
-                                 + bcolors.ENDC)
+            self.subreport.append(color + label
+                                  + report_string % inserts
+                                  + bcolors.ENDC)
 
     def load_recipe(self):
-        self.report +=  "Checking recipe %s...\n" % self.recipe_name
+        ''' Loads recipe from file '''
+        self.report += "Checking recipe %s...\n" % self.recipe_name
         if self.recipe_name.split('.')[-1] == "recipe":
             self.recipe_type = self.get_recipe_type(self.recipe_name)
             try:
                 self.recipe_as_dict = plistlib.readPlist(self.recipe_name)
             except Exception, e:
                 self.is_recipe = False
-                self.reporter("fail", 
+                self.reporter("fail",
                               "Unable to load %s, are you sure"
                               "it is a recipe file?",
                               (self.recipe_name))
@@ -122,6 +104,7 @@ class RecipeChecker():
                           (self.recipe_name))
 
     def check_pkginfo(self, setting, config):
+        ''' Checks the pkginfo in Input of a munki recipe '''
         if config['SET']:
             if setting not in self.pkginfo:
                 self.reporter("fail",
@@ -145,21 +128,21 @@ class RecipeChecker():
                     self.reporter("ok",
                                   '%s set to: \'%s\'',
                                   (setting, self.pkginfo[setting]))
-            
-
 
     def check_recipe(self):
+        ''' Runs checks on a munki recipe '''
         if (self.recipe_type == 'munki' and 'Input' in self.recipe_as_dict
-            and 'pkginfo' in self.recipe_as_dict['Input']):
+                and 'pkginfo' in self.recipe_as_dict['Input']):
             self.pkginfo = self.recipe_as_dict['Input']['pkginfo']
             for setting, config  in PKGINFO_SETTINGS.iteritems():
                 self.check_pkginfo(setting, config)
         else:
             self.reporter("fail",
-            '%s is not a .munki recipe',
-            (self.recipe_name))
+                          '%s is not a .munki recipe',
+                          (self.recipe_name))
 
 def main():
+    ''' Parses args and checks filename passed in '''
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", action="count", default=0)
     parser.add_argument("recipe", type=str, help="a valid autopkg recipe file")
@@ -170,13 +153,14 @@ def main():
     r = RecipeChecker(recipe, verbosity)
     r.load_recipe()
     if r.is_recipe:
+        r.get_recipe_type(recipe)
         r.check_recipe()
     print r.report
     if r.subreport != []:
         for line in r.subreport:
             print line
     else:
-        print "==> Recipe checks passed!"
+        print "==> All checks passed at this verbosity level!"
 
 if __name__ == '__main__':
     main()
