@@ -30,7 +30,6 @@ import glob
 import os
 
 SUPPORTED_RECIPE_TYPES = ['download', 'pkg', 'munki']
-RECIPE = 'StatPlus_mac_LE.munki.recipe'
 TESTS_FOLDER = './tests'
 
 class Recipe(dict):
@@ -222,8 +221,7 @@ class RecipeTester(object):
 
     def output_test_results(self, method):
         if method == 'console':
-            results = ''
-            results += 'Testing %s...\n' % self.recipe.recipe_file
+            results = 'Testing %s...\n' % self.recipe.recipe_file
             fails = 0
             warns = 0
             passes = 0
@@ -269,7 +267,6 @@ def load_all_tests():
     return all_tests
 
 def main():  
-    
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--json", action="store_true")
