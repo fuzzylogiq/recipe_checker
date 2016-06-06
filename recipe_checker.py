@@ -60,6 +60,9 @@ class RecipeChecker(object):
         self.pkginfo = {}
         self.verbosity = verbosity
         self.is_recipe = True
+        self.warns = 0
+        self.failures = 0
+        self.passes = 0
 
     def get_recipe_type(self, recipe):
         ''' Figure out recipe type from recipe. Returns type '''
@@ -71,14 +74,17 @@ class RecipeChecker(object):
             label = "[fail] "
             color = bcolors.FAIL
             verbosity_level = 0
+            self.failures += 1
         if report_type == "warn":
             label = "[warn] "
             color = bcolors.WARNING
             verbosity_level = 1
+            self.warns += 1
         if report_type == "ok":
-            label = "[ ok ] "
+            label = "[pass] "
             color = bcolors.OKBLUE
             verbosity_level = 2
+            self.passes += 1
         if self.verbosity >= verbosity_level:
             self.subreport.append(color + label
                                   + report_string % inserts
@@ -92,6 +98,7 @@ class RecipeChecker(object):
             try:
                 self.recipe_as_dict = plistlib.readPlist(self.recipe_name)
             except Exception, e:
+                print e
                 self.is_recipe = False
                 self.reporter("fail",
                               "Unable to load %s, are you sure"
@@ -141,28 +148,30 @@ class RecipeChecker(object):
                           '%s is not a .munki recipe',
                           (self.recipe_name))
 
-def main():
-    ''' Parses args and checks filename passed in '''
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", action="count", default=0)
-    parser.add_argument("recipe", action='append', nargs='+', type=str,
-                         help="at least one autopkg recipe file")
-    args = parser.parse_args()
+    def main():
+        ''' Parses args and checks filename passed in '''
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-v", "--verbose", action="count", default=0)
+        parser.add_argument("recipe", action='append', nargs='+', type=str,
+                             help="at least one autopkg recipe file")
+        args = parser.parse_args()
 
-    recipes = args.recipe[0]
-    verbosity = args.verbose
-    for recipe in recipes:
-        r = RecipeChecker(recipe, verbosity)
-        r.load_recipe()
-        if r.is_recipe:        
-            r.get_recipe_type(recipe)
-            r.check_recipe()
-        print r.report
-        if r.subreport != []:
-            for line in r.subreport:
-                print line
-        else:
-            print "==> All checks passed at this verbosity level!"
+        recipes = args.recipe[0]
+        verbosity = args.verbose
+        
+        for recipe in recipes:
+            r = RecipeChecker(recipe, verbosity)
+            r.load_recipe()
+            if r.is_recipe:        
+                r.get_recipe_type(recipe)
+                r.check_recipe()
+            print r.report
+            if r.subreport != []:
+                for line in r.subreport:
+                    print line
+            else:
+                print "==> All checks passed at this verbosity level!"
+            print "%s passes, %s warnings, %s failures" % (r.passes, r.warns, r.failures)
 
 if __name__ == '__main__':
     main()

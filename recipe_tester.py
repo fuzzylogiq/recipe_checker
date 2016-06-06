@@ -38,7 +38,7 @@ class Recipe(dict):
         self.recipe_file = recipe_file
         self.load_recipe()
         self.set_recipe_type()
-        
+
     def load_recipe(self):
         try:
             with open(self.recipe_file, 'r') as infile:
@@ -246,7 +246,7 @@ class RecipeTester(object):
             else:
                 results += '\nNo failed tests. 🎉\n'
             results += 72*'-'
-            return results 
+            return results
 
         if method == 'json':
             return json.dumps(
@@ -266,7 +266,7 @@ def load_all_tests():
             print e
     return all_tests
 
-def main():  
+def main():
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--json", action="store_true")
@@ -274,7 +274,7 @@ def main():
     parser.add_argument("recipe", action='append', nargs='+', type=str,
                          help="at least one autopkg recipe file")
     args = parser.parse_args()
-    
+
     for recipe in args.recipe[0]:
         rt = RecipeTester(recipe, load_all_tests())
 
